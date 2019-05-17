@@ -1,0 +1,5 @@
+#+TITLE: Model system for validating lambda dynamics implementations.
+
+This package implements a model system aimed at validating implementations of the lambda dynamics simulation method.
+
+The idea is that the behavior of a simple system in one spatial dimension can be reproduced within a fully-functional molecular dynamics engine in three spatial dimensions. Consequently, ensemble averages of the one-dimensional model can be numerically computed with high speed and accuracy using this software package and compared to the corresponding results gathered by sampling a sufficiently long (and much more computationally expensive) molecular dynamics run.

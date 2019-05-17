@@ -1,0 +1,97 @@
+\documentclass{amsart}
+
+% \usepackage{amsmath}
+% \usepackage{amssymb}
+% \usepackage{amsthm}
+% \usepackage{graphicx}
+% 
+% \newcommand{\todo}[1]{\sidenote{\textbf{To do:} {#1}}}
+
+\begin{document}
+
+\title[Model system for lambda dynamics]{Model system for validating lambda dynamics implementations}
+\author{Juan M. Bello-Rivas}
+\date{}
+\maketitle
+
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+\section{Introduction}
+
+The purpose of this document is to describe a model system aimed at validating implementations of the lambda dynamics simulation method.
+The key observation is that the behavior of a simple one-dimensional system can be reproduced within a fully-functional molecular dynamics engine in three spatial dimensions.
+Ensemble averages of the one-dimensional model can be computed with high accuracy using quadrature methods and compared to the corresponding results gathered by sampling a sufficiently long molecular dynamics run.
+
+\section{Toy model}
+
+Consider a system of two particles with opposite and equal charges $q_1$ and $q_2$.
+The potential energy of the system is given by
+\begin{equation*}
+  U(r, \lambda)
+  =
+  4 \varepsilon \left( \left( \frac{\sigma}{r} \right)^{12} - \left( \frac{\sigma}{r} \right)^{6} \right)
+  +
+  \lambda \frac{q_1 q_2}{r}
+  -
+  4 b \left( \lambda - \frac{1}{2} \right)^2
+  -
+  A \left( \lambda - B \right)^2.
+\end{equation*}
+For the sake of simplicity, we take $\varepsilon = 1$, $\sigma = 1$, $q_1 = 1$ and $q_2 = -1$ (this is equivalent to assuming a suitable set of units).
+
+Suppose our system exists in a cubic simulation box with side length equal to $L > 0$ and periodic boundary conditions.
+We can simulate a one-dimensional system on the periodic interval $[0, L]$ by choosing initial conditions on the line defined by $y = z = 0$, and modifying our Langevin thermostat so that the random forcing only affects the $x$ coordinate of our system.
+In that case, the partition function is proportional to
+\begin{equation*}
+  Q(\beta)
+  =
+  \int_0^1 \int_0^L \int_0^L \mathrm{e}^{-\beta U(r(x, y), \lambda)} \, \mathrm{d} y \, \mathrm{d} x \, \mathrm{d} \lambda,
+\end{equation*}
+where
+\begin{equation*}
+  r(x, y)
+  =
+  \min \left\{ x - y - L k \, | \, k = -1, 0, 1 \right\}
+\end{equation*}
+is the distance between $x$ and $y$ accounting for the periodic boundary.
+
+Since the canonical distribution for the system described above is low-dimensional, we can compute ensemble averages with high-precision using quadrature methods.
+In particular, we could compute ensemble averages or construct histograms of the values of $r \in [0, L]$ (this is the same as studying the radial distribution function) and $\lambda \in [0, 1]$ using MD and compare these results with those obtained from high-precision quadrature methods.
+
+\section{Change of variables}
+
+In practice, we simulate $\theta \in \mathbb{R}$ and transform $\theta \mapsto \lambda(\theta) = \sin^2 \theta$ and, therefore, we need to apply the corresponding change of variables to our ensemble averages.
+
+Let $k \in \mathbb{N}$ and note that
+\begin{equation*}
+  \int_{-\frac{k \pi}{2}}^{\frac{k \pi}{2}} f(sin^2\theta) \, \mathrm{d} \theta
+  =
+  k \int_0^1 \frac{f(\lambda)}{\sqrt{\lambda ( 1 - \lambda )}} \, \mathrm{d} \lambda.
+\end{equation*}
+Thus,
+\begin{align*}
+  Q(\beta; k)
+  &=
+  \int_{-\frac{k \pi}{2}}^{\frac{k \pi}{2}}
+  \int_0^L \int_0^L \mathrm{e}^{-\beta U(r(x, y), \sin^2 \theta)} \, \mathrm{d} y \, \mathrm{d} x \, \mathrm{d} \theta \\
+  &=
+    k \int_0^1
+  \int_0^L \int_0^L \frac{\mathrm{e}^{-\beta U(r(x, y), \lambda)}}{\sqrt{\lambda ( 1 - \lambda )}} \, \mathrm{d} y \, \mathrm{d} x \, \mathrm{d} \lambda
+\end{align*}
+and we see that the ensemble average of an observable $A$ is
+\begin{align*}
+  \langle A(x, y, \lambda; k) \rangle
+  &=
+  \frac{k \int_0^1
+    \int_0^L \int_0^L A(x, y, \lambda) \, \frac{\mathrm{e}^{-\beta U(r(x, y), \lambda)}}{\sqrt{\lambda ( 1 - \lambda )}} \, \mathrm{d} y \, \mathrm{d} x \, \mathrm{d} \lambda}
+  {Q(\beta; k)} \\
+  &=
+  \frac{\int_0^1
+    \int_0^L \int_0^L A(x, y, \lambda) \, \frac{\mathrm{e}^{-\beta U(r(x, y), \lambda)}}{\sqrt{\lambda ( 1 - \lambda )}} \, \mathrm{d} y \, \mathrm{d} x \, \mathrm{d} \lambda}
+    {\int_0^1
+  \int_0^L \int_0^L \frac{\mathrm{e}^{-\beta U(r(x, y), \lambda)}}{\sqrt{\lambda ( 1 - \lambda )}} \, \mathrm{d} y \, \mathrm{d} x \, \mathrm{d} \lambda}.
+\end{align*}
+Consequently, the expression above is independent of $k$ and we conclude that the ensemble averages are equivalent after the change of variables.
+
+\end{document}

@@ -1,0 +1,6 @@
+[submodule "cubature"]
+	path = cubature
+	url = git@github.com:stevengj/cubature.git
+[submodule "contrib/cubature"]
+	path = contrib/cubature
+	url = git@github.com:stevengj/cubature.git
